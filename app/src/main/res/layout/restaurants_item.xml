@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        style="@style/CardStyle"
+        android:layout_height="wrap_content">
+
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <LinearLayout
+                android:layout_marginTop="@dimen/margin_8"
+                android:layout_marginStart="@dimen/margin_16"
+                android:layout_marginEnd="@dimen/margin_16"
+                android:layout_marginBottom="@dimen/margin_8"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+            <TextView
+                    tools:text="Title"
+                    android:id="@+id/title"
+                    android:layout_width="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/background_dark"
+                    android:gravity="end"
+                    android:textStyle="bold"
+                    android:layout_height="wrap_content"/>
+
+            <TextView
+                    tools:text="Subtitle"
+                    android:gravity="center_vertical"
+                    android:textSize="16sp"
+                    android:drawableStart="@drawable/ic_action_star"
+                    android:id="@+id/subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout
+                android:weightSum="1"
+                android:layout_marginEnd="@dimen/margin_16"
+                android:layout_marginStart="@dimen/margin_16"
+                android:layout_marginBottom="@dimen/margin_4"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+            <TextView
+                    tools:text="1000000"
+                    android:layout_weight="0.3"
+                    android:drawablePadding="@dimen/margin_4"
+                    android:gravity="center_vertical"
+                    android:drawableStart="@drawable/ic_action_basket"
+                    android:id="@+id/averagePrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+            <TextView
+                    tools:text="Free"
+                    android:drawablePadding="@dimen/margin_4"
+                    android:gravity="center_vertical"
+                    android:layout_weight="0.3"
+                    android:drawableStart="@drawable/ic_action_bike"
+                    android:layout_width="wrap_content"
+                    android:id="@+id/deliveryCost"
+                    android:layout_height="wrap_content"/>
+
+            <TextView
+                    tools:text="40"
+                    android:layout_weight="0.3"
+                    android:id="@+id/minimumTime"
+                    android:gravity="center_vertical"
+                    android:drawablePadding="@dimen/margin_4"
+                    android:drawableStart="@drawable/ic_action_clock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
