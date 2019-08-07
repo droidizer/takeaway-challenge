@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.guru.takeaway.R
 import com.guru.takeaway.ui.adapter.RestaurantsAdapter
-import com.guru.takeaway.ui.utils.LoadingState
+import com.guru.takeaway.ui.utils.loadingstate.LoadingState
 import com.guru.takeaway.ui.viewmodel.MainViewModel
 import com.guru.takeaway.ui.viewmodel.MainViewModelFactory
 import com.jakewharton.rxbinding2.widget.textChanges

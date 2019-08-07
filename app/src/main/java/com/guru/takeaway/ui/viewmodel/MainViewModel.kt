@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.guru.takeaway.ui.utils.ISchedulersProvider
 import com.guru.takeaway.domain.IRestaurantDataSource
 import com.guru.takeaway.model.Restaurant
-import com.guru.takeaway.ui.utils.LoadingState
+import com.guru.takeaway.ui.utils.loadingstate.LoadingState
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposables
 import io.reactivex.schedulers.Schedulers

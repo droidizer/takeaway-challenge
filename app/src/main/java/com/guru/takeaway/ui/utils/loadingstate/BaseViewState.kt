@@ -1,4 +1,4 @@
-package com.guru.takeaway.ui
+package com.guru.takeaway.ui.utils.loadingstate
 
 
 open class BaseViewState<T> {

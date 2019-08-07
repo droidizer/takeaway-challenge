@@ -1,7 +1,6 @@
-package com.guru.takeaway.ui.utils;
+package com.guru.takeaway.ui.utils.loadingstate;
 
 import com.guru.takeaway.model.Restaurant;
-import com.guru.takeaway.ui.BaseViewState;
 
 import java.util.ArrayList;
 import java.util.List;
