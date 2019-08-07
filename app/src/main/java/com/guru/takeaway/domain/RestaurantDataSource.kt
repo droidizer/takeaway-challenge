@@ -5,10 +5,8 @@ import com.google.gson.Gson
 import com.guru.takeaway.R
 import com.guru.takeaway.model.Restaurant
 import com.guru.takeaway.model.RestaurantModel
-import io.reactivex.Observable
+import io.reactivex.Single
 import io.reactivex.disposables.Disposables
-import io.reactivex.subjects.BehaviorSubject
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class RestaurantDataSource
@@ -16,11 +14,9 @@ class RestaurantDataSource
 
     private var restaurantDisposable = Disposables.disposed()
 
-    override fun getRestaurantList(): Observable<List<Restaurant>> {
-        val restaurantBehaviourSubject = BehaviorSubject.create<List<Restaurant>>()
+    override fun getRestaurantList(): Single<List<Restaurant>> {
 
-        runBlocking {
-
+        return Single.fromCallable {
             val jsonString = resources.openRawResource(R.raw.restaurants)
                 .bufferedReader().use { it.readText() }
 
@@ -34,13 +30,11 @@ class RestaurantDataSource
             }
 
             open.addAll(others)
-            restaurantBehaviourSubject.onNext(open)
+            open
         }
-
-        return restaurantBehaviourSubject.hide()
     }
 
     override fun clear() {
         restaurantDisposable.dispose()
     }
-}
+} 
