@@ -8,7 +8,7 @@ import com.guru.takeaway.R
 import com.guru.takeaway.model.Restaurant
 
 
-class RestaurantsAdapter constructor(private var items: List<Restaurant>) :
+class RestaurantsAdapter constructor(private var items: MutableList<Restaurant>) :
     RecyclerView.Adapter<RestaurantsViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RestaurantsViewHolder {
@@ -24,15 +24,18 @@ class RestaurantsAdapter constructor(private var items: List<Restaurant>) :
         holder.bindTo(items.get(position))
     }
 
-    fun updateList(newItems: List<Restaurant>) {
+    fun updateList(newItems: MutableList<Restaurant>) {
+        clear()
+
         val diffResult = DiffUtil.calculateDiff(
             DiffUtilCallback(items, newItems))
-        items = newItems
+
+        items.addAll(newItems)
         diffResult.dispatchUpdatesTo(this)
     }
 
     fun clear() {
-        items = emptyList()
+        items.clear()
         notifyDataSetChanged()
     }
 }
