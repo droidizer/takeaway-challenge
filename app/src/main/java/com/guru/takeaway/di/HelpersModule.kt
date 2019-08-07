@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.guru.takeaway.TakeawayApplication
+import com.guru.takeaway.ui.utils.ISchedulersProvider
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -20,4 +21,10 @@ class HelpersModule {
     @Singleton
     @Provides
     fun provideGson(): Gson = GsonBuilder().create()
+
+    @Singleton
+    @Provides
+    fun providesScheduler(): ISchedulersProvider {
+        return ISchedulersProvider.DEFAULT
+    }
 }
