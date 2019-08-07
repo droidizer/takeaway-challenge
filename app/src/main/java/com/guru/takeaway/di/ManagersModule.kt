@@ -9,5 +9,5 @@ import dagger.Module
 abstract class ManagersModule {
 
     @Binds
-    abstract fun bindsDataSource(apiManager: RestaurantDataSource): IRestaurantDataSource
+    abstract fun bindsDataSource(dataSource: RestaurantDataSource): IRestaurantDataSource
 }
