@@ -86,5 +86,7 @@ class MainViewModel constructor(
 
     fun clear() {
         dataSource.clear()
+        disposable.dispose()
+        searchNotifierDisposable.dispose()
     }
 }
