@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         mainRv.layoutManager = LinearLayoutManager(this)
         mainRv.addItemDecoration(itemDecoration)
         mainRv.adapter = restaurantsAdapter
-        initSearchInputListener()
+        initSearch()
 
         mainViewModel.loadRestaurants()
         mainViewModel.subscribeForSearchChanges()
@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun initSearchInputListener() {
+    private fun initSearch() {
         searchInput.setOnEditorActionListener { view: View, actionId: Int, _: KeyEvent? ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 mainViewModel.publishSearchChanges(searchInput.text.toString())
