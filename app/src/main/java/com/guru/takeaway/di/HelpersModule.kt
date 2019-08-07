@@ -21,10 +21,4 @@ class HelpersModule {
     @Singleton
     @Provides
     fun provideGson(): Gson = GsonBuilder().create()
-
-    @Singleton
-    @Provides
-    fun providesScheduler(): ISchedulersProvider {
-        return ISchedulersProvider.DEFAULT
-    }
 }
