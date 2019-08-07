@@ -1,4 +1,4 @@
-package com.guru.takeaway
+package com.guru.takeaway.ui.utils
 
 import com.guru.takeaway.ui.utils.ISchedulersProvider
 import io.reactivex.Scheduler
