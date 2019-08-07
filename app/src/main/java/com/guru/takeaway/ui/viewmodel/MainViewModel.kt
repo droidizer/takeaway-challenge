@@ -16,7 +16,7 @@ class MainViewModel constructor(
     private val schedulerProvider: ISchedulersProvider
 ) : ViewModel() {
 
-    private var disposable = Disposables.disposed()
+    private var itemsDisposable = Disposables.disposed()
     private var itemsLiveData = MutableLiveData<MutableList<Restaurant>>()
     private var loadingStateLiveData = MutableLiveData<LoadingState>()
 
@@ -27,8 +27,8 @@ class MainViewModel constructor(
     val allItems: MutableList<Restaurant> = mutableListOf()
 
     fun loadRestaurants() {
-        if (disposable.isDisposed) {
-            disposable = dataSource.getRestaurantList()
+        if (itemsDisposable.isDisposed) {
+            itemsDisposable = dataSource.getRestaurantList()
                 .subscribeOn(schedulerProvider.getIOScheduler())
                 .observeOn(schedulerProvider.getUIScheduler())
                 .subscribe({
@@ -86,7 +86,7 @@ class MainViewModel constructor(
 
     fun clear() {
         dataSource.clear()
-        disposable.dispose()
+        itemsDisposable.dispose()
         searchNotifierDisposable.dispose()
     }
 }
