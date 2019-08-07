@@ -28,17 +28,16 @@ import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {
 
-    private var firstTime: Boolean = true
-    private var disposable = Disposables.disposed()
-
     @Inject
-    lateinit var factory: MainViewModelFactory
+    lateinit var viewModelFactory: MainViewModelFactory
 
-    private val viewModel: MainViewModel by lazy {
-        ViewModelProviders.of(this, factory).get(MainViewModel::class.java)
+    private var searchDisposable = Disposables.disposed()
+
+    private val mainViewModel: MainViewModel by lazy {
+        ViewModelProviders.of(this, viewModelFactory).get(MainViewModel::class.java)
     }
 
-    private val mAdapter: RestaurantsAdapter by lazy {
+    private val restaurantsAdapter: RestaurantsAdapter by lazy {
         RestaurantsAdapter(mutableListOf())
     }
 
@@ -63,25 +62,25 @@ class MainActivity : AppCompatActivity() {
 
         mainRv.layoutManager = LinearLayoutManager(this)
         mainRv.addItemDecoration(itemDecoration)
-        mainRv.adapter = mAdapter
-
+        mainRv.adapter = restaurantsAdapter
         initSearchInputListener()
 
-        viewModel.getRestaurants().observe(this, Observer {
-            mAdapter.updateList(it)
+        mainViewModel.loadRestaurants()
+        mainViewModel.subscribeForSearchChanges()
+    }
 
-            if (firstTime) {
-                viewModel.subscribeForSearchChanges()
-                firstTime = false
-            }
+    override fun onStart() {
+        super.onStart()
+        mainViewModel.subscribeToRestaurants().observe(this, Observer {
+            restaurantsAdapter.updateList(it)
         })
 
         cancelSearch.setOnClickListener {
             searchInput.text.clear()
-            mAdapter.updateList(viewModel.allItems)
+            restaurantsAdapter.updateList(mainViewModel.allItems)
         }
 
-        viewModel.subscribeToError().observe(this, Observer {
+        mainViewModel.subscribeToError().observe(this, Observer {
             if (LoadingState.ERROR_STATE.error == it.error) {
                 mainRv.visibility = View.GONE
                 errorLayout.visibility = View.VISIBLE
@@ -92,7 +91,7 @@ class MainActivity : AppCompatActivity() {
     private fun initSearchInputListener() {
         searchInput.setOnEditorActionListener { view: View, actionId: Int, _: KeyEvent? ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                viewModel.publishSearchChanges(searchInput.text.toString())
+                mainViewModel.publishSearchChanges(searchInput.text.toString())
                 dismissKeyboard(view.windowToken)
                 true
             } else {
@@ -100,13 +99,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (disposable.isDisposed) {
-            disposable = searchInput
+        if (searchDisposable.isDisposed) {
+            searchDisposable = searchInput
                 .textChanges()
-                .debounce(3, TimeUnit.SECONDS)
+                .debounce(1, TimeUnit.SECONDS)
                 .filter { s -> s.isNotEmpty() }
                 .subscribe {
-                    viewModel.publishSearchChanges(searchInput.text.toString())
+                    mainViewModel.publishSearchChanges(searchInput.text.toString())
                     dismissKeyboard(searchInput.windowToken)
                 }
         }
@@ -119,7 +118,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        disposable.dispose()
-        viewModel.clear()
+        searchDisposable.dispose()
+        mainViewModel.clear()
     }
 }

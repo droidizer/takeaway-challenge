@@ -3,13 +3,11 @@ package com.guru.takeaway.ui.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.guru.takeaway.ui.utils.ISchedulersProvider
 import com.guru.takeaway.domain.IRestaurantDataSource
 import com.guru.takeaway.model.Restaurant
+import com.guru.takeaway.ui.utils.ISchedulersProvider
 import com.guru.takeaway.ui.utils.loadingstate.LoadingState
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposables
-import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import java.util.*
 
@@ -28,10 +26,11 @@ class MainViewModel constructor(
     private val originalItems: MutableList<Restaurant> = mutableListOf()
     val allItems: MutableList<Restaurant> = mutableListOf()
 
-    fun getRestaurants(): LiveData<MutableList<Restaurant>> {
+    fun loadRestaurants() {
         if (disposable.isDisposed) {
             disposable = dataSource.getRestaurantList()
-                .compose(schedulerProvider.applySchedulers())
+                .subscribeOn(schedulerProvider.getIOScheduler())
+                .observeOn(schedulerProvider.getUIScheduler())
                 .subscribe({
                     allItems.addAll(it)
                     LoadingState.SUCCESS_STATE.data = it
@@ -41,7 +40,9 @@ class MainViewModel constructor(
                     loadingStateLiveData.postValue(LoadingState.ERROR_STATE)
                 })
         }
+    }
 
+    fun subscribeToRestaurants(): LiveData<MutableList<Restaurant>> {
         return itemsLiveData
     }
 
@@ -59,9 +60,8 @@ class MainViewModel constructor(
                             it.name.toLowerCase(Locale.GERMAN).contains(search.toLowerCase(Locale.GERMAN))
                         }.toList()
                     }
-
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(schedulerProvider.getNewThreadScheduler())
+                    .observeOn(schedulerProvider.getUIScheduler())
                     .subscribe(this::search, this::handleError)
         }
     }
