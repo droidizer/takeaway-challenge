@@ -1,43 +1,87 @@
 package com.guru.takeaway.ui.viewmodel
 
-import android.text.TextUtils
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.guru.takeaway.ui.utils.ISchedulersProvider
 import com.guru.takeaway.domain.IRestaurantDataSource
 import com.guru.takeaway.model.Restaurant
-import io.reactivex.Completable
+import com.guru.takeaway.ui.utils.LoadingState
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposables
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 import java.util.*
 
-class MainViewModel constructor(private val dataSource: IRestaurantDataSource) : ViewModel() {
+class MainViewModel constructor(
+    private val dataSource: IRestaurantDataSource,
+    private val schedulerProvider: ISchedulersProvider
+) : ViewModel() {
 
     private var disposable = Disposables.disposed()
-    private var originalItemsLiveData = MutableLiveData<List<Restaurant>>()
+    private var itemsLiveData = MutableLiveData<MutableList<Restaurant>>()
+    private var loadingStateLiveData = MutableLiveData<LoadingState>()
 
+    private var searchNotifierDisposable = Disposables.disposed()
+    private val searchPublishSubject: PublishSubject<String> = PublishSubject.create()
+
+    private val originalItems: MutableList<Restaurant> = mutableListOf()
     val allItems: MutableList<Restaurant> = mutableListOf()
-    val filteredItems: MutableList<Restaurant> = mutableListOf()
-    val oldFilteredItems: MutableList<Restaurant> = mutableListOf()
 
-    fun search(query: String): Completable = Completable.create {
-        if (!TextUtils.isEmpty(query)) {
-            val filter = allItems.filter {
-                it.name.toLowerCase(Locale.GERMAN).contains(query.toLowerCase(Locale.GERMAN))
-            }.toList()
+    fun getRestaurants(): LiveData<MutableList<Restaurant>> {
+        if (disposable.isDisposed) {
+            disposable = dataSource.getRestaurantList()
+                .compose(schedulerProvider.applySchedulers())
+                .subscribe({
+                    allItems.addAll(it)
+                    LoadingState.SUCCESS_STATE.data = it
+                    itemsLiveData.postValue(LoadingState.SUCCESS_STATE.data)
+                }, {
+                    LoadingState.ERROR_STATE.error = it
+                    loadingStateLiveData.postValue(LoadingState.ERROR_STATE)
+                })
+        }
 
-            filteredItems.clear()
-            filteredItems.addAll(filter)
-            it.onComplete()
+        return itemsLiveData
+    }
+
+    fun subscribeForSearchChanges() {
+        if (searchNotifierDisposable.isDisposed) {
+            searchNotifierDisposable =
+                searchPublishSubject
+                    .filter { s -> s.isNotEmpty() }
+                    .map { search ->
+                        originalItems.clear()
+                        originalItems.addAll(allItems)
+
+                        search.replace("\\s".toRegex(), "")
+                        return@map originalItems.filter {
+                            it.name.toLowerCase(Locale.GERMAN).contains(search.toLowerCase(Locale.GERMAN))
+                        }.toList()
+                    }
+
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(this::search, this::handleError)
         }
     }
 
-    fun getRestaurants(): LiveData<List<Restaurant>> {
-        disposable = dataSource.getRestaurantList()
-            .subscribe {
-                allItems.addAll(it)
-                originalItemsLiveData.postValue(allItems)
-            }
-        return originalItemsLiveData
+    fun publishSearchChanges(text: String) {
+        searchPublishSubject.onNext(text)
+    }
+
+    fun subscribeToError(): LiveData<LoadingState> {
+        return loadingStateLiveData
+    }
+
+    private fun search(filter: List<Restaurant>) {
+        LoadingState.SUCCESS_STATE.data = filter
+        itemsLiveData.postValue(LoadingState.SUCCESS_STATE.data)
+    }
+
+    private fun handleError(it: Throwable?) {
+        LoadingState.ERROR_STATE.error = it
+        loadingStateLiveData.postValue(LoadingState.ERROR_STATE)
     }
 
     fun clear() {

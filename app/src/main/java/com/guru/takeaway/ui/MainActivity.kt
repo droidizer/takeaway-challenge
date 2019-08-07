@@ -1,9 +1,13 @@
 package com.guru.takeaway.ui
 
+import android.content.Context
 import android.graphics.Rect
 import android.os.Bundle
-import android.text.TextUtils
+import android.os.IBinder
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -11,14 +15,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.guru.takeaway.R
 import com.guru.takeaway.ui.adapter.RestaurantsAdapter
+import com.guru.takeaway.ui.utils.LoadingState
 import com.guru.takeaway.ui.viewmodel.MainViewModel
 import com.guru.takeaway.ui.viewmodel.MainViewModelFactory
 import com.jakewharton.rxbinding2.widget.textChanges
 import dagger.android.AndroidInjection
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.addTo
-import io.reactivex.schedulers.Schedulers
+import io.reactivex.disposables.Disposables
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.search_bar_layout.*
 import java.util.concurrent.TimeUnit
@@ -26,8 +28,8 @@ import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var mAdapter: RestaurantsAdapter
-    private val disposable = CompositeDisposable()
+    private var firstTime: Boolean = true
+    private var disposable = Disposables.disposed()
 
     @Inject
     lateinit var factory: MainViewModelFactory
@@ -36,12 +38,16 @@ class MainActivity : AppCompatActivity() {
         ViewModelProviders.of(this, factory).get(MainViewModel::class.java)
     }
 
+    private val mAdapter: RestaurantsAdapter by lazy {
+        RestaurantsAdapter(mutableListOf())
+    }
+
     private val itemDecoration by lazy {
         val margin: Int = resources.getDimension(R.dimen.margin_4).toInt()
         val lateralMargin: Int = resources.getDimension(R.dimen.margin_8).toInt()
 
         object : RecyclerView.ItemDecoration() {
-            override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State){
+            override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
                 outRect.bottom = margin
                 outRect.top = margin
                 outRect.left = lateralMargin
@@ -57,44 +63,63 @@ class MainActivity : AppCompatActivity() {
 
         mainRv.layoutManager = LinearLayoutManager(this)
         mainRv.addItemDecoration(itemDecoration)
-        mainRv.adapter = RestaurantsAdapter(listOf())
+        mainRv.adapter = mAdapter
+
+        initSearchInputListener()
+
+        viewModel.getRestaurants().observe(this, Observer {
+            mAdapter.updateList(it)
+
+            if (firstTime) {
+                viewModel.subscribeForSearchChanges()
+                firstTime = false
+            }
+        })
 
         cancelSearch.setOnClickListener {
             searchInput.text.clear()
-            mAdapter.clear()
             mAdapter.updateList(viewModel.allItems)
         }
 
-        viewModel.getRestaurants().observe(this, Observer {
-            mainRv.adapter = RestaurantsAdapter(it)
-            // Required for Step 2
-            mAdapter = mainRv.adapter as RestaurantsAdapter
-            subscribeToSearchChanges()
+        viewModel.subscribeToError().observe(this, Observer {
+            if (LoadingState.ERROR_STATE.error == it.error) {
+                mainRv.visibility = View.GONE
+                errorLayout.visibility = View.VISIBLE
+            }
         })
     }
 
-    private fun subscribeToSearchChanges() {
-        searchInput
-            .textChanges()
-            .debounce(1000, TimeUnit.MILLISECONDS)
-            .filter { res -> !TextUtils.isEmpty(res.toString()) }
-            .subscribe {
-                viewModel
-                    .search(it.toString())
-                    .subscribeOn(Schedulers.computation())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe {
-                        viewModel.oldFilteredItems.clear()
-                        viewModel.oldFilteredItems.addAll(viewModel.filteredItems)
-                        // Step 2
-                        mAdapter.updateList(viewModel.filteredItems)
-                    }.addTo(disposable)
-            }.addTo(disposable)
+    private fun initSearchInputListener() {
+        searchInput.setOnEditorActionListener { view: View, actionId: Int, _: KeyEvent? ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                viewModel.publishSearchChanges(searchInput.text.toString())
+                dismissKeyboard(view.windowToken)
+                true
+            } else {
+                false
+            }
+        }
+
+        if (disposable.isDisposed) {
+            disposable = searchInput
+                .textChanges()
+                .debounce(3, TimeUnit.SECONDS)
+                .filter { s -> s.isNotEmpty() }
+                .subscribe {
+                    viewModel.publishSearchChanges(searchInput.text.toString())
+                    dismissKeyboard(searchInput.windowToken)
+                }
+        }
+    }
+
+    private fun dismissKeyboard(windowToken: IBinder) {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        imm?.hideSoftInputFromWindow(windowToken, 0)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        disposable.clear()
+        disposable.dispose()
         viewModel.clear()
     }
 }
