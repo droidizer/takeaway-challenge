@@ -10,6 +10,7 @@ import com.guru.takeaway.ui.utils.loadingstate.LoadingState
 import io.reactivex.disposables.Disposables
 import io.reactivex.subjects.PublishSubject
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class MainViewModel constructor(
     private val dataSource: IRestaurantDataSource,
@@ -49,6 +50,8 @@ class MainViewModel constructor(
         if (searchNotifierDisposable.isDisposed) {
             searchNotifierDisposable =
                 searchPublishSubject
+                    .debounce(1, TimeUnit.SECONDS, schedulerProvider.getComputationScheduler())
+                    .filter { s -> s.isNotEmpty() }
                     .map { search ->
                         originalItems.clear()
                         originalItems.addAll(allItems)
@@ -59,7 +62,6 @@ class MainViewModel constructor(
                         }.toList()
                     }
 
-                    .subscribeOn(schedulerProvider.getNewThreadScheduler())
                     .observeOn(schedulerProvider.getUIScheduler())
                     .subscribe(this::filteredItems, this::handleError)
         }

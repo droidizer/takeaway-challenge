@@ -102,8 +102,6 @@ class MainActivity : AppCompatActivity() {
         if (searchDisposable.isDisposed) {
             searchDisposable = searchInput
                 .textChanges()
-                .debounce(1, TimeUnit.SECONDS)
-                .filter { s -> s.isNotEmpty() }
                 .subscribe {
                     mainViewModel.publishSearchChanges(searchInput.text.toString())
                     dismissKeyboard(searchInput.windowToken)
