@@ -17,13 +17,12 @@ class MainViewModel constructor(
 ) : ViewModel() {
 
     private var itemsDisposable = Disposables.disposed()
-    private var itemsLiveData = MutableLiveData<MutableList<Restaurant>>()
-    private var loadingStateLiveData = MutableLiveData<LoadingState>()
-
     private var searchNotifierDisposable = Disposables.disposed()
     private val searchPublishSubject: PublishSubject<String> = PublishSubject.create()
-
     private val originalItems: MutableList<Restaurant> = mutableListOf()
+
+    var itemsLiveData = MutableLiveData<MutableList<Restaurant>>()
+    var loadingStateLiveData = MutableLiveData<LoadingState>()
     val allItems: MutableList<Restaurant> = mutableListOf()
 
     fun loadRestaurants() {
@@ -50,21 +49,23 @@ class MainViewModel constructor(
         if (searchNotifierDisposable.isDisposed) {
             searchNotifierDisposable =
                 searchPublishSubject
-                    .filter { s -> s.isNotEmpty() }
                     .map { search ->
                         originalItems.clear()
                         originalItems.addAll(allItems)
 
-                        search.replace("\\s".toRegex(), "")
                         return@map originalItems.filter {
-                            it.name.toLowerCase(Locale.GERMAN).contains(search.toLowerCase(Locale.GERMAN))
+                            trimWhiteSpaces(it.name).toLowerCase(Locale.GERMAN)
+                                .contains(trimWhiteSpaces(search).toLowerCase(Locale.GERMAN))
                         }.toList()
                     }
+
                     .subscribeOn(schedulerProvider.getNewThreadScheduler())
                     .observeOn(schedulerProvider.getUIScheduler())
-                    .subscribe(this::search, this::handleError)
+                    .subscribe(this::filteredItems, this::handleError)
         }
     }
+
+    private fun trimWhiteSpaces(search: String) = search.replace("\\s".toRegex(), "")
 
     fun publishSearchChanges(text: String) {
         searchPublishSubject.onNext(text)
@@ -74,7 +75,7 @@ class MainViewModel constructor(
         return loadingStateLiveData
     }
 
-    private fun search(filter: List<Restaurant>) {
+    private fun filteredItems(filter: List<Restaurant>) {
         LoadingState.SUCCESS_STATE.data = filter
         itemsLiveData.postValue(LoadingState.SUCCESS_STATE.data)
     }
