@@ -65,7 +65,7 @@ class MainViewModel constructor(
         }
     }
 
-    private fun trimWhiteSpaces(search: String) = search.replace("\\s".toRegex(), "")
+    private fun trimWhiteSpaces(untrimmed: String) = untrimmed.replace("\\s".toRegex(), "")
 
     fun publishSearchChanges(text: String) {
         searchPublishSubject.onNext(text)

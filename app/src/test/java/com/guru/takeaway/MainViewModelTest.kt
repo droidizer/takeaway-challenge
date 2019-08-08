@@ -26,8 +26,6 @@ class MainViewModelTest {
     @JvmField
     var rule = InstantTaskExecutorRule()
 
-    private lateinit var viewModel: MainViewModel
-
     @Mock
     private lateinit var observer: Observer<MutableList<Restaurant>>
 
@@ -38,12 +36,15 @@ class MainViewModelTest {
         Mockito.mock(IRestaurantDataSource::class.java)
     }
 
+    private val viewModel: MainViewModel by lazy {
+        MainViewModel(mockDataSource, mockSchedulerProvider)
+    }
+
     private val mockSchedulerProvider: ISchedulersProvider = TestSchedulerProvider()
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        viewModel = MainViewModel(mockDataSource, mockSchedulerProvider)
         viewModel.loadingStateLiveData.observeForever(stateObserver)
         viewModel.itemsLiveData.observeForever(observer)
     }
@@ -143,4 +144,10 @@ class MainViewModelTest {
         Restaurant("Masala Roti Ghar", SortingValues(15, 12.50, 40, 2308, 12, 114.0, 15.00, 5.00), "open"),
         Restaurant("Masala House", SortingValues(20, 22.50, 45, 2308, 12, 114.0, 15.00, 5.00), "open")
     )
+
+    @After
+    fun teardown() {
+        mockDataSource.clear()
+        viewModel.clear()
+    }
 }

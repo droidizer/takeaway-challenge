@@ -63,10 +63,10 @@ class MainActivity : AppCompatActivity() {
         mainRv.layoutManager = LinearLayoutManager(this)
         mainRv.addItemDecoration(itemDecoration)
         mainRv.adapter = restaurantsAdapter
-        initSearch()
 
         mainViewModel.loadRestaurants()
         mainViewModel.subscribeForSearchChanges()
+        initSearch()
     }
 
     override fun onStart() {
