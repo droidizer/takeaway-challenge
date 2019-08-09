@@ -10,6 +10,8 @@ as auto search after 3 seconds of user input.
 
 3. Cancel search button can be used if the all original items need to be retrieved. 
 
+4. MainViewModel has a few tests. 
+
 # frameworks 
 
 1. MVVM architecture using ViewModel and other architecture components like livedata.
@@ -17,3 +19,4 @@ as auto search after 3 seconds of user input.
 2. Uses RXJ2 for the datasource and Dagger2 for dependency injection. 
 
 3. RXbinding to subscribe to search changes. 
+
