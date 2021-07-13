@@ -47,6 +47,7 @@ jobs:
           
       - name: Push Artifacts With Message
         with: 
+         run: echo "Hello World"
          releaseNotes: ${{steps.notes.outputs.result}}
      
      
